@@ -9,6 +9,8 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Queue;
 
 public class p2 extends JFrame {
     public GridManager GM2 = new GridManager(1440, 960);
@@ -43,15 +45,18 @@ public class p2 extends JFrame {
     ArrayList<String> textList = new ArrayList<>();
     HashMap<String, ArrayList<String>> nextList = new HashMap<String, ArrayList<String> >();
     HashMap<String, Boolean> visitedHashMap = new HashMap<String, Boolean>();
+    HashMap<String, Boolean> succeedHashMap = new HashMap<>();
 
+    int remainUrlCount;
 
-    public p2(int maxUrlNumber, String url) {
+    public p2(int maxUrlCount, String url) {
         try { // 使用Windows的界面风格
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception e) {
             e.printStackTrace();
         }
 
+        remainUrlCount = maxUrlCount;
         this.setTitle("爬取网址: " + url);
         this.setSize(GM2.WIDTH, GM2.HEIGHT);
         this.setLocation(100,50);
@@ -92,7 +97,7 @@ public class p2 extends JFrame {
         this.add(jPanel);
         this.setVisible(true);
         buttonStart.addActionListener((k) -> {
-            new SpiderOne(this, url).start();
+            new Spider(this, url).start();
         });
         buttonImport.addActionListener((k) -> {
             getLib();
@@ -166,33 +171,65 @@ public class p2 extends JFrame {
         }
     }
 
-    //爬取单个网址线程
-    class SpiderOne extends Thread {
-        String website;    //网页链接
+     class Spider extends Thread {
+        String url;    //网页链接
         MyProgressBar mpb;    //进度条
-
-        public SpiderOne(JFrame fa, String s) {
-            website = s;
+        public Spider(JFrame fa, String str) {
             mpb = new MyProgressBar(fa, "Running");
+            url = str;
+//            url = url.substring(url.indexOf("//") + 2);
+//            url = url.replaceAll("\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}", "");
         }
-
-        public void run() {
-            if (website.length() <= 0) {    //判断网址是否正常
-                JOptionPane.showMessageDialog(null, "网址不能为空");
+        private void crawl(String nowUrl) {
+            if (nowUrl.isEmpty()) {    //判断网址是否正常
                 return;
             }
-            htmlArea.setText("");    //清除文本
-            textArea.setText("");
-            mpb.setText("爬取" + website + "中...");    //设置进度条界面标题
+            mpb.setText("爬取" + nowUrl + "中...");    //设置进度条界面标题
             mpb.setVisible(true);        //显示进度条
-            var html = HtmlHandler.getHtml(website);    //开始爬取
+            var html = HtmlHandler.getHtml(nowUrl);    //开始爬取
             mpb.dispose();    //关闭进度条
             if (!html.isEmpty()) {    //若爬取正常
-                JOptionPane.showMessageDialog(null, "爬取完毕");    //提示完成
+                remainUrlCount --;
+
+                JOptionPane.showMessageDialog(null, url + "已爬取完毕，剩余 " +
+                        remainUrlCount + " 个网页待爬取");    //提示完成
+
                 htmlArea.append(html);    //显示html源代码
                 var text = HtmlHandler.getText(html);    //匹配网页文本
-                textArea.append(text);    //显示网页文本
-                HtmlHandler.getNextUrl(html);
+                textArea.append(text);//显示网页文本
+
+                urlList.add(nowUrl);
+                htmlList.add(html);
+                textList.add(text);
+                succeedHashMap.put(nowUrl, true);
+
+                ArrayList<String> nextUrls = HtmlHandler.getNextUrl(html);
+                nextList.put(nowUrl, nextUrls);
+            }
+        }
+        public void run() {
+            LinkedList<String> queue = new LinkedList<String>();
+            queue.add(url);
+            while (!queue.isEmpty() && remainUrlCount > 0) {
+                String front = queue.removeFirst();
+                if (visitedHashMap.containsKey(front)) continue;
+                crawl(front);
+                visitedHashMap.put(front, true);
+                if (!nextList.containsKey(front)) continue;
+                for (var next: nextList.get(front)) {
+                    if (!visitedHashMap.containsKey(next)) {
+                        queue.add(next);
+                    }
+                }
+            }
+
+            for (var s: urlList) {
+                System.out.println(s + ":");
+                for (var next: nextList.get(s)) {
+                    if (succeedHashMap.containsKey(next)) {
+                        System.out.println("    " + next);
+                    }
+                }
             }
         }
     }

@@ -31,7 +31,7 @@ public class HtmlHandler {
             }
             br.close();
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, website + "爬取源代码失败\r\n" + e.getLocalizedMessage());
+//            JOptionPane.showMessageDialog(null, website + "爬取源代码失败\r\n" + e.getLocalizedMessage());
         }
 //        System.out.println(text);
         return text.toString();
@@ -47,25 +47,25 @@ public class HtmlHandler {
     static String regExlink = "\"[\\s\\S]*\"";
 
     //定义正则表达式
-    static Pattern pattern3 = Pattern.compile(regExHtml, Pattern.CASE_INSENSITIVE);
-    static Pattern pattern1 = Pattern.compile(regExScript, Pattern.CASE_INSENSITIVE);
-    static Pattern pattern2 = Pattern.compile(regExStyle, Pattern.CASE_INSENSITIVE);
-    static Pattern pattern4 = Pattern.compile(regExSpace, Pattern.CASE_INSENSITIVE);
-    static Pattern pattern5 = Pattern.compile(regExImg, Pattern.CASE_INSENSITIVE);
+    static Pattern patternHtml = Pattern.compile(regExHtml, Pattern.CASE_INSENSITIVE);
+    static Pattern patternScript = Pattern.compile(regExScript, Pattern.CASE_INSENSITIVE);
+    static Pattern patternStyle = Pattern.compile(regExStyle, Pattern.CASE_INSENSITIVE);
+    static Pattern patternSpace = Pattern.compile(regExSpace, Pattern.CASE_INSENSITIVE);
+    static Pattern patternImg = Pattern.compile(regExImg, Pattern.CASE_INSENSITIVE);
     static Pattern patternA = Pattern.compile(regExA, Pattern.CASE_INSENSITIVE);
     static Pattern patternHref = Pattern.compile(regExHref, Pattern.CASE_INSENSITIVE);
     static Pattern patternLink = Pattern.compile(regExlink, Pattern.CASE_INSENSITIVE);
 
     public static String getText(String str) {
-        var matcher = pattern1.matcher(str);
+        var matcher = patternScript.matcher(str);
         str = matcher.replaceAll("");        //去掉普通标签
-        matcher = pattern2.matcher(str);
+        matcher = patternStyle.matcher(str);
         str = matcher.replaceAll("");        //去掉script标签
-        matcher = pattern3.matcher(str);
+        matcher = patternHtml.matcher(str);
         str = matcher.replaceAll("");        //去掉style标签
-        matcher = pattern4.matcher(str);
+        matcher = patternSpace.matcher(str);
         str = matcher.replaceAll("\n");    //连续回车或空格变一个
-        matcher = pattern5.matcher(str);
+        matcher = patternImg.matcher(str);
         str = matcher.replaceAll("");        //去掉转义符
         return str;        //返回文本
     }
@@ -79,9 +79,18 @@ public class HtmlHandler {
             while (matcherHref.find()) {
                 var matcherLink = patternLink.matcher(matcherHref.group());
                 while (matcherLink.find()) {
-                    var url = matcherLink.group().split("\"")[1];
-                    System.out.println("Found: " + url);
-                    urls.add(url);
+                    String[] splitLink = matcherLink.group().split("\"");
+                    if (splitLink.length < 1) break;
+                    try {
+                        var url = splitLink[1];
+                        if (urls.contains(url)) {
+                            continue;
+                        }
+                        System.out.println("Found: " + url);
+                        urls.add(url);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }
