@@ -56,6 +56,7 @@ public class p2 extends JFrame {
     int maxUrlCount;
     int nowUrlCount;
     boolean runningFlag = false;
+    boolean graphFlag = false;
 
     public p2(int count, String url) {
         try { // 使用Windows的界面风格
@@ -114,6 +115,7 @@ public class p2 extends JFrame {
         this.setVisible(true);
         buttonStart.addActionListener((k) -> {
             runningFlag = true;
+            graphFlag = false;
             buttonStart.setEnabled(false);
             buttonImport.setEnabled(false);
             buttonHighlight.setEnabled(false);
@@ -139,6 +141,8 @@ public class p2 extends JFrame {
                         JOptionPane.PLAIN_MESSAGE, image);
             } catch (Exception e) {
                 e.printStackTrace();
+                JOptionPane.showMessageDialog(null, "图像显示失败！",
+                        "", JOptionPane.WARNING_MESSAGE);
             }
         });
         urlJList.addMouseListener(new MouseAdapter() {
@@ -197,6 +201,7 @@ public class p2 extends JFrame {
     //高亮显示
     public void showSensword() {
         String wordtext = wordArea.getText();
+        if (wordtext.isEmpty()) return ;
         String[] splitLines = wordtext.split("\\n");
         wordList.clear();
         wordNum.clear();
@@ -237,14 +242,15 @@ public class p2 extends JFrame {
             url = str;
 
             nowUrlCount = 0;
+            htmlArea.setText("");
+            textArea.setText("");
+            urlModel.clear();
             urlList.clear();
             htmlList.clear();
             textList.clear();
             nextList.clear();
             visitedHashMap.clear();
             succeedHashMap.clear();
-//            url = url.substring(url.indexOf("//") + 2);
-//            url = url.replaceAll("\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}", "");
         }
         private void crawl(String nowUrl) {
             if (nowUrl.isEmpty()) {    //判断网址是否正常
@@ -256,16 +262,11 @@ public class p2 extends JFrame {
             mpb.dispose();    //关闭进度条
             if (!html.isEmpty()) {    //若爬取正常
                 ++ nowUrlCount;
-
-//                htmlArea.append(html);    //显示html源代码
                 var text = HtmlHandler.getText(html);    //匹配网页文本
-//                textArea.append(text);//显示网页文本
-
                 urlList.add(nowUrl);
                 htmlList.add(html);
                 textList.add(text);
                 succeedHashMap.put(nowUrl, nowUrlCount);
-
                 ArrayList<String> nextUrls = HtmlHandler.getNextUrl(html);
                 nextList.put(nowUrl, nextUrls);
             }
@@ -286,33 +287,41 @@ public class p2 extends JFrame {
                 }
             }
 
-            StringBuilder dotFormat= new StringBuilder();
-            for (var s: urlList) {
-                System.out.println(s + ":");
-                for (var next: nextList.get(s)) {
-                    if (succeedHashMap.containsKey(next)) {
-                        System.out.println("    " + next);
-                        dotFormat.append(succeedHashMap.get(s)).append("->").append(succeedHashMap.get(next)).append(";");
+            if (JOptionPane.showConfirmDialog(null, "共爬取了 " +
+                    nowUrlCount + " 个网页，是否在生成可视化有向图网？", "爬取完毕", JOptionPane.YES_NO_OPTION)
+                    == JOptionPane.YES_OPTION) {
+                try {
+                    StringBuilder dotFormat= new StringBuilder();
+                    for (var s: urlList) {
+                        System.out.println(s + ":");
+                        dotFormat.append(succeedHashMap.get(s)).append(";");
+                        for (var next: nextList.get(s)) {
+                            if (succeedHashMap.containsKey(next)) {
+                                System.out.println("    " + next);
+                                dotFormat.append(succeedHashMap.get(s)).append("->").append(succeedHashMap.get(next)).append(";");
+                            }
+                        }
                     }
+                    System.out.println(dotFormat);
+                    Graph.createDotGraph(dotFormat.toString(), "DotGraph");
+
+                    buttonShowGraph.setEnabled(true);
+                    JOptionPane.showMessageDialog(null, "已在当前目录下生成可视化有向图网",
+                            "成功", JOptionPane.PLAIN_MESSAGE);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    buttonShowGraph.setEnabled(false);
+                    JOptionPane.showMessageDialog(null, "生成可视化有向图网失败",
+                            "错误", JOptionPane.WARNING_MESSAGE);
                 }
             }
-            System.out.println(dotFormat);
-            Graph.createDotGraph(dotFormat.toString(), "DotGraph");
 
-            JOptionPane.showMessageDialog(null, "共爬取了 " +
-                    nowUrlCount + " 个网页，已在当前目录建立可视化有向图网", "爬取完毕", JOptionPane.PLAIN_MESSAGE);    //提示完成
-
-            htmlArea.setText("");
-            textArea.setText("");
-            for (var s: urlList) {
-                urlModel.addElement(succeedHashMap.get(s) + ": " + s);
-            }
+            for (var s: urlList) urlModel.addElement(succeedHashMap.get(s) + ": " + s);
 
             runningFlag = false;
             buttonStart.setEnabled(true);
             buttonImport.setEnabled(true);
             buttonHighlight.setEnabled(true);
-            buttonShowGraph.setEnabled(true);
             buttonStop.setEnabled(false);
         }
     }
