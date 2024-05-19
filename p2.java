@@ -5,38 +5,43 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultHighlighter;
 import javax.swing.JTextArea;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Queue;
 
 public class p2 extends JFrame {
-    public GridManager GM2 = new GridManager(1440, 960);
+    public GridManager GM2 = new GridManager(1280, 720);
+    Font bottonFont = new Font("微软雅黑",Font.PLAIN,20);
+    Font textFont = new Font("微软雅黑",Font.PLAIN,16);
+
     JPanel jPanel = new JPanel();
     JPanel htmlPanel = new JPanel();
     JPanel textPanel = new JPanel();
     JPanel buttonPanel = new JPanel();
     JPanel wordPanel = new JPanel();
     JPanel listPanel = new JPanel();
-    JPanel graphPanel = new JPanel();
 
-
-    JLabel graphLabel = new JLabel();
     JLabel listLabel = new JLabel("已爬取URL列表");
 
     JButton buttonStart = new JButton("开始爬取");
+    JButton buttonStop = new JButton("停止爬取");
     JButton buttonImport = new JButton("导入敏感词");
     JButton buttonHighlight = new JButton("提取敏感词");
 
     JTabbedPane tabPane = new JTabbedPane();
-    JTextArea htmlArea = new JTextArea(50, 80);
+    JTextArea htmlArea = new JTextArea(40, 80);
     JScrollPane htmlSPane = new JScrollPane(htmlArea);
-    JTextArea textArea = new JTextArea(50, 80);
+    JTextArea textArea = new JTextArea(40, 80);
     JScrollPane textSPane = new JScrollPane(textArea);
-    JTextArea wordArea = new JTextArea(50, 80);
+    JTextArea wordArea = new JTextArea(40, 80);
     JScrollPane wordSPane = new JScrollPane(wordArea);
+
+    DefaultListModel urlModel = new DefaultListModel();
+    JList urlJList = new JList(urlModel);
 
     ArrayList<String> wordList = new ArrayList<>();
     ArrayList<Integer> wordNum = new ArrayList<>();
@@ -47,56 +52,69 @@ public class p2 extends JFrame {
     HashMap<String, Boolean> visitedHashMap = new HashMap<String, Boolean>();
     HashMap<String, Boolean> succeedHashMap = new HashMap<>();
 
+    int maxUrlCount;
     int remainUrlCount;
+    boolean runningFlag = false;
 
-    public p2(int maxUrlCount, String url) {
+    public p2(int count, String url) {
         try { // 使用Windows的界面风格
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        remainUrlCount = maxUrlCount;
+        maxUrlCount = count;
         this.setTitle("爬取网址: " + url);
         this.setSize(GM2.WIDTH, GM2.HEIGHT);
-        this.setLocation(100,50);
+        this.setLocation(200,100);
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
 
         jPanel.setLayout(new BorderLayout());
         htmlPanel.setLayout(new BorderLayout());
         htmlArea.setLineWrap(true);
+        htmlArea.setFont(textFont);
         htmlPanel.add(htmlSPane, BorderLayout.CENTER);
         textPanel.setLayout(new BorderLayout());
         textArea.setLineWrap(true);
+        textArea.setFont(textFont);
         textPanel.add(textSPane, BorderLayout.CENTER);
-        wordArea.setLineWrap(true);
         wordPanel.setLayout(new BorderLayout());
+        wordArea.setLineWrap(true);
+        wordArea.setFont(textFont);
         wordPanel.add(wordSPane, BorderLayout.CENTER);
+        tabPane.setFont(textFont);
         tabPane.add("源代码", htmlPanel);
         tabPane.add("文本", textPanel);
         tabPane.add("敏感词", wordPanel);
-//        wordPane.setPreferredSize(new Dimension(6, 50));
-        buttonPanel.add(buttonStart, BorderLayout.WEST);
-        buttonPanel.add(buttonImport, BorderLayout.NORTH);
-        buttonPanel.add(buttonHighlight, BorderLayout.EAST);
+
+        buttonPanel.setLayout(new GridLayout(1, 4));
+        buttonImport.setFont(bottonFont);
+        buttonHighlight.setFont(bottonFont);
+        buttonStart.setFont(bottonFont);
+        buttonStop.setFont(bottonFont);
+        buttonStop.setEnabled(false);
+        buttonPanel.add(buttonStart);
+        buttonPanel.add(buttonStop);
+        buttonPanel.add(buttonImport);
+        buttonPanel.add(buttonHighlight);
 
         listPanel.setLayout(new BorderLayout());
+        listLabel.setFont(textFont);
         listPanel.add(listLabel, BorderLayout.NORTH);
-
-        ImageIcon graphImage = new ImageIcon(
-                "C:\\Users\\Lenovo\\Desktop\\work_station\\sth\\image\\Suzuran\\92093214_p0.jpg");
-        graphImage.setImage(graphImage.getImage().getScaledInstance(400,
-                800,Image.SCALE_DEFAULT));
-        graphLabel.setIcon(graphImage);
-        graphPanel.add(graphLabel);
+        listPanel.add(urlJList, BorderLayout.CENTER);
 
         jPanel.add(listPanel, BorderLayout.WEST);
         jPanel.add(tabPane, BorderLayout.CENTER);
-        jPanel.add(graphPanel, BorderLayout.EAST);
         jPanel.add(buttonPanel, BorderLayout.SOUTH);
         this.add(jPanel);
         this.setVisible(true);
         buttonStart.addActionListener((k) -> {
+            runningFlag = true;
+            buttonStart.setEnabled(false);
+            buttonImport.setEnabled(false);
+            buttonHighlight.setEnabled(false);
+            buttonStop.setEnabled(true);
+
             new Spider(this, url).start();
         });
         buttonImport.addActionListener((k) -> {
@@ -104,6 +122,29 @@ public class p2 extends JFrame {
         });
         buttonHighlight.addActionListener((k) -> {
             showSensword();
+        });
+        buttonStop.addActionListener((k) -> {
+            runningFlag = false;
+        });
+        urlJList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                super.mouseClicked(e);
+                htmlArea.setText("");
+                textArea.setText("");
+                int position = urlJList.getSelectedIndex();
+                htmlArea.append(htmlList.get(position));
+                textArea.append(textList.get(position));
+            }
+            @Override
+            public void mousePressed(MouseEvent e) {
+                super.mousePressed(e);
+                htmlArea.setText("");
+                textArea.setText("");
+                int position = urlJList.getSelectedIndex();
+                htmlArea.append(htmlList.get(position));
+                textArea.append(textList.get(position));
+            }
         });
     }
 
@@ -117,13 +158,10 @@ public class p2 extends JFrame {
         var ok = fChooser.showOpenDialog(this);
         if (ok != JFileChooser.APPROVE_OPTION) return;    //判断是否正常选择
         wordList.clear();    //清空之前的记录
-//        sensWord.setText("");
         var choosenLib = fChooser.getSelectedFile();    //获取选择的文件
 
         try {    //读取选中文件中的记录
-//                var br = new BufferedReader(new FileReader(choosenLib));
             var br = new BufferedReader(new InputStreamReader(new FileInputStream(choosenLib), StandardCharsets.UTF_8));
-
             while (true) {
                 var str = br.readLine();
                 if (str == null) break;
@@ -156,19 +194,24 @@ public class p2 extends JFrame {
         hg.removeAllHighlights();    //清除之前的高亮显示记录
         var text = textArea.getText();    //得到文本框的文本
         var painter = new DefaultHighlighter.DefaultHighlightPainter(Color.PINK);
-//            if(wordList.isEmpty())return ;
+        if(wordList.isEmpty()) return ;
+
+        int senwordCount = 0;
         for (var str : wordList) {    //匹配其中的每一个敏感词
             var index = 0;
             while ((index = text.indexOf(str, index)) >= 0) {
                 try {
                     hg.addHighlight(index, index + str.length(), painter);    //高亮显示匹配到的词语
                     index += str.length();    //更新匹配条件继续匹配
+                    ++ senwordCount;
                 } catch (BadLocationException e) {
                     // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
             }
         }
+        JOptionPane.showMessageDialog(null, "共检测出 " + senwordCount + " 个敏感词",
+                "提取结束", JOptionPane.PLAIN_MESSAGE);
     }
 
      class Spider extends Thread {
@@ -177,6 +220,14 @@ public class p2 extends JFrame {
         public Spider(JFrame fa, String str) {
             mpb = new MyProgressBar(fa, "Running");
             url = str;
+
+            remainUrlCount = maxUrlCount;
+            urlList.clear();
+            htmlList.clear();
+            textList.clear();
+            nextList.clear();
+            visitedHashMap.clear();
+            succeedHashMap.clear();
 //            url = url.substring(url.indexOf("//") + 2);
 //            url = url.replaceAll("\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}", "");
         }
@@ -191,12 +242,9 @@ public class p2 extends JFrame {
             if (!html.isEmpty()) {    //若爬取正常
                 remainUrlCount --;
 
-                JOptionPane.showMessageDialog(null, url + "已爬取完毕，剩余 " +
-                        remainUrlCount + " 个网页待爬取");    //提示完成
-
-                htmlArea.append(html);    //显示html源代码
+//                htmlArea.append(html);    //显示html源代码
                 var text = HtmlHandler.getText(html);    //匹配网页文本
-                textArea.append(text);//显示网页文本
+//                textArea.append(text);//显示网页文本
 
                 urlList.add(nowUrl);
                 htmlList.add(html);
@@ -210,7 +258,7 @@ public class p2 extends JFrame {
         public void run() {
             LinkedList<String> queue = new LinkedList<String>();
             queue.add(url);
-            while (!queue.isEmpty() && remainUrlCount > 0) {
+            while (runningFlag && !queue.isEmpty() && remainUrlCount > 0) {
                 String front = queue.removeFirst();
                 if (visitedHashMap.containsKey(front)) continue;
                 crawl(front);
@@ -223,6 +271,8 @@ public class p2 extends JFrame {
                 }
             }
 
+            JOptionPane.showMessageDialog(null, "共爬取了 " +
+                    (maxUrlCount - remainUrlCount) + " 个网页", "爬取完毕", JOptionPane.PLAIN_MESSAGE);    //提示完成
             for (var s: urlList) {
                 System.out.println(s + ":");
                 for (var next: nextList.get(s)) {
@@ -231,6 +281,18 @@ public class p2 extends JFrame {
                     }
                 }
             }
+
+            htmlArea.setText("");
+            textArea.setText("");
+            for (var s: urlList) {
+                urlModel.addElement(s);
+            }
+
+            runningFlag = false;
+            buttonStart.setEnabled(true);
+            buttonImport.setEnabled(true);
+            buttonHighlight.setEnabled(true);
+            buttonStop.setEnabled(false);
         }
     }
 }

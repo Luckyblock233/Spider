@@ -40,11 +40,12 @@ public class HtmlHandler {
     static String regExHtml = "<[^>]+>";        //匹配标签
     static String regExScript = "<script[^>]*?>[\\s\\S]*?<\\/script>";        //匹配script标签
     static String regExStyle = "<style[^>]*?>[\\s\\S]*?<\\/style>";        //匹配style标签
-    static String regExA = "<a[^>]*?>[\\s\\S]*?<\\/a>";        //匹配style标签
+//    static String regExA = "<a[^>]*?>[\\s\\S]*?<\\/a>";        //匹配 a 标签
+    static String regExA = "<a[^>]+href=[\"'](.*?)[\"']";        //匹配 a 标签
     static String regExSpace = "[\\s]{2,}";    //匹配连续空格或回车等
     static String regExImg = "&[\\S]*?;+";    //匹配转义符
-    static String regExHref = "href=\"[^\"]*\"";
-    static String regExlink = "\"[\\s\\S]*\"";
+//    static String regExHref = "href=\"[^\"]*\"";
+//    static String regExlink = "\"[\\s\\S]*\"";
 
     //定义正则表达式
     static Pattern patternHtml = Pattern.compile(regExHtml, Pattern.CASE_INSENSITIVE);
@@ -53,8 +54,8 @@ public class HtmlHandler {
     static Pattern patternSpace = Pattern.compile(regExSpace, Pattern.CASE_INSENSITIVE);
     static Pattern patternImg = Pattern.compile(regExImg, Pattern.CASE_INSENSITIVE);
     static Pattern patternA = Pattern.compile(regExA, Pattern.CASE_INSENSITIVE);
-    static Pattern patternHref = Pattern.compile(regExHref, Pattern.CASE_INSENSITIVE);
-    static Pattern patternLink = Pattern.compile(regExlink, Pattern.CASE_INSENSITIVE);
+//    static Pattern patternHref = Pattern.compile(regExHref, Pattern.CASE_INSENSITIVE);
+//    static Pattern patternLink = Pattern.compile(regExlink, Pattern.CASE_INSENSITIVE);
 
     public static String getText(String str) {
         var matcher = patternScript.matcher(str);
@@ -75,24 +76,16 @@ public class HtmlHandler {
 
         var matcherA = patternA.matcher(str);
         while (matcherA.find()) {
-            var matcherHref = patternHref.matcher(matcherA.group());
-            while (matcherHref.find()) {
-                var matcherLink = patternLink.matcher(matcherHref.group());
-                while (matcherLink.find()) {
-                    String[] splitLink = matcherLink.group().split("\"");
-                    if (splitLink.length < 1) break;
-                    try {
-                        var url = splitLink[1];
-                        if (urls.contains(url)) {
-                            continue;
-                        }
-                        System.out.println("Found: " + url);
-                        urls.add(url);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
+            var strMatcherA = matcherA.group();
+            int position = strMatcherA.indexOf("href=");
+            var url = strMatcherA.substring(position + 5);
+            if (url.startsWith("\"") || url.startsWith("'")) url = url.substring(1, url.length() - 1);
+            if (url.endsWith("\"") || url.endsWith("'")) url = url.substring(0, url.length() - 1);
+            if (url.isEmpty()) continue;
+
+            System.out.println("Found: " + url);
+            if (urls.contains(url)) continue;
+            urls.add(url);
         }
         return urls;
     }

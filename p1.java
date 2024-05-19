@@ -5,13 +5,14 @@ import java.awt.*;
 
 public class p1 extends JFrame {
     GridManager GM = new GridManager(500, 200);
+    Font textFont = new Font("微软雅黑",Font.PLAIN,16);
     JPanel jPanel1 = new JPanel();
     JPanel jPanel2 = new JPanel();
     JPanel jPanel3 = new JPanel();
     JButton startButton = new JButton("启动！");
     JLabel titleLabel = new JLabel("我操你妈逼的傻逼java应用实践我先爬了爬爬爬爬爬", JLabel.CENTER);
-    JLabel settingLabel = new JLabel("最大爬取数量:");
-    JLabel urlLabel = new JLabel("爬取目标网址:");
+    JLabel settingLabel = new JLabel("最大爬取数量：");
+    JLabel urlLabel = new JLabel("爬取目标网址：");
     JTextField urlTextField = new JTextField(80);
     JTextField settingTextField = new JTextField(80);
 
@@ -47,18 +48,24 @@ public class p1 extends JFrame {
         }
 
         jPanel1.setLayout(new BorderLayout());
+        settingLabel.setFont(textFont);
         jPanel1.add(settingLabel, BorderLayout.WEST);
+        settingTextField.setFont(textFont);
         jPanel1.add(settingTextField, BorderLayout.CENTER);
 
         jPanel2.setLayout(new BorderLayout());
+        urlLabel.setFont(textFont);
         jPanel2.add(urlLabel, BorderLayout.WEST);
+        urlTextField.setFont(textFont);
         jPanel2.add(urlTextField, BorderLayout.CENTER);
 
         jPanel3.setLayout(new GridLayout(3, 1));
         jPanel3.add(jPanel1);
         jPanel3.add(jPanel2);
+        startButton.setFont(textFont);
         jPanel3.add(startButton);
 
+        titleLabel.setFont(textFont);
         this.add(titleLabel, BorderLayout.CENTER);
         this.add(jPanel3, BorderLayout.SOUTH);
         this.setVisible(true);
