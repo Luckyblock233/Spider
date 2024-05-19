@@ -31,6 +31,7 @@ public class p2 extends JFrame {
     JButton buttonStop = new JButton("停止爬取");
     JButton buttonImport = new JButton("导入敏感词");
     JButton buttonHighlight = new JButton("提取敏感词");
+    JButton buttonShowGraph = new JButton("显示可视化有向图网");
 
     JTabbedPane tabPane = new JTabbedPane();
     JTextArea htmlArea = new JTextArea(40, 80);
@@ -50,10 +51,10 @@ public class p2 extends JFrame {
     ArrayList<String> textList = new ArrayList<>();
     HashMap<String, ArrayList<String>> nextList = new HashMap<String, ArrayList<String> >();
     HashMap<String, Boolean> visitedHashMap = new HashMap<String, Boolean>();
-    HashMap<String, Boolean> succeedHashMap = new HashMap<>();
+    HashMap<String, Integer> succeedHashMap = new HashMap<>();
 
     int maxUrlCount;
-    int remainUrlCount;
+    int nowUrlCount;
     boolean runningFlag = false;
 
     public p2(int count, String url) {
@@ -87,16 +88,19 @@ public class p2 extends JFrame {
         tabPane.add("文本", textPanel);
         tabPane.add("敏感词", wordPanel);
 
-        buttonPanel.setLayout(new GridLayout(1, 4));
+        buttonPanel.setLayout(new GridLayout(1, 5));
         buttonImport.setFont(bottonFont);
         buttonHighlight.setFont(bottonFont);
         buttonStart.setFont(bottonFont);
         buttonStop.setFont(bottonFont);
         buttonStop.setEnabled(false);
+        buttonShowGraph.setFont(bottonFont);
+        buttonShowGraph.setEnabled(false);
         buttonPanel.add(buttonStart);
         buttonPanel.add(buttonStop);
         buttonPanel.add(buttonImport);
         buttonPanel.add(buttonHighlight);
+        buttonPanel.add(buttonShowGraph);
 
         listPanel.setLayout(new BorderLayout());
         listLabel.setFont(textFont);
@@ -113,6 +117,7 @@ public class p2 extends JFrame {
             buttonStart.setEnabled(false);
             buttonImport.setEnabled(false);
             buttonHighlight.setEnabled(false);
+            buttonShowGraph.setEnabled(false);
             buttonStop.setEnabled(true);
 
             new Spider(this, url).start();
@@ -125,6 +130,16 @@ public class p2 extends JFrame {
         });
         buttonStop.addActionListener((k) -> {
             runningFlag = false;
+        });
+        buttonShowGraph.addActionListener((k) -> {
+            try {
+                ImageIcon icon = new ImageIcon("DotGraph.png");
+                ImageIcon image = new ImageIcon(icon.getImage()); //icon--->Image-->ImageIcon
+                JOptionPane.showMessageDialog (null, "", "可视化图像",
+                        JOptionPane.PLAIN_MESSAGE, image);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         });
         urlJList.addMouseListener(new MouseAdapter() {
             @Override
@@ -221,7 +236,7 @@ public class p2 extends JFrame {
             mpb = new MyProgressBar(fa, "Running");
             url = str;
 
-            remainUrlCount = maxUrlCount;
+            nowUrlCount = 0;
             urlList.clear();
             htmlList.clear();
             textList.clear();
@@ -240,7 +255,7 @@ public class p2 extends JFrame {
             var html = HtmlHandler.getHtml(nowUrl);    //开始爬取
             mpb.dispose();    //关闭进度条
             if (!html.isEmpty()) {    //若爬取正常
-                remainUrlCount --;
+                ++ nowUrlCount;
 
 //                htmlArea.append(html);    //显示html源代码
                 var text = HtmlHandler.getText(html);    //匹配网页文本
@@ -249,7 +264,7 @@ public class p2 extends JFrame {
                 urlList.add(nowUrl);
                 htmlList.add(html);
                 textList.add(text);
-                succeedHashMap.put(nowUrl, true);
+                succeedHashMap.put(nowUrl, nowUrlCount);
 
                 ArrayList<String> nextUrls = HtmlHandler.getNextUrl(html);
                 nextList.put(nowUrl, nextUrls);
@@ -258,7 +273,7 @@ public class p2 extends JFrame {
         public void run() {
             LinkedList<String> queue = new LinkedList<String>();
             queue.add(url);
-            while (runningFlag && !queue.isEmpty() && remainUrlCount > 0) {
+            while (runningFlag && !queue.isEmpty() && nowUrlCount < maxUrlCount) {
                 String front = queue.removeFirst();
                 if (visitedHashMap.containsKey(front)) continue;
                 crawl(front);
@@ -271,27 +286,33 @@ public class p2 extends JFrame {
                 }
             }
 
-            JOptionPane.showMessageDialog(null, "共爬取了 " +
-                    (maxUrlCount - remainUrlCount) + " 个网页", "爬取完毕", JOptionPane.PLAIN_MESSAGE);    //提示完成
+            StringBuilder dotFormat= new StringBuilder();
             for (var s: urlList) {
                 System.out.println(s + ":");
                 for (var next: nextList.get(s)) {
                     if (succeedHashMap.containsKey(next)) {
                         System.out.println("    " + next);
+                        dotFormat.append(succeedHashMap.get(s)).append("->").append(succeedHashMap.get(next)).append(";");
                     }
                 }
             }
+            System.out.println(dotFormat);
+            Graph.createDotGraph(dotFormat.toString(), "DotGraph");
+
+            JOptionPane.showMessageDialog(null, "共爬取了 " +
+                    nowUrlCount + " 个网页，已在当前目录建立可视化有向图网", "爬取完毕", JOptionPane.PLAIN_MESSAGE);    //提示完成
 
             htmlArea.setText("");
             textArea.setText("");
             for (var s: urlList) {
-                urlModel.addElement(s);
+                urlModel.addElement(succeedHashMap.get(s) + ": " + s);
             }
 
             runningFlag = false;
             buttonStart.setEnabled(true);
             buttonImport.setEnabled(true);
             buttonHighlight.setEnabled(true);
+            buttonShowGraph.setEnabled(true);
             buttonStop.setEnabled(false);
         }
     }
