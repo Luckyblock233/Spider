@@ -1,10 +1,6 @@
-package spider;
+package spider.Handler.Graph;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-
-import spider.*;
 
 public class Graph {
     public static void createDotGraph(String dotFormat,String fileName)

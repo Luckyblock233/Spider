@@ -1,4 +1,6 @@
-package spider;
+package spider.Handler;
+
+import spider.UI.GridManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -10,7 +12,7 @@ public class p1 extends JFrame {
     JPanel jPanel2 = new JPanel();
     JPanel jPanel3 = new JPanel();
     JButton startButton = new JButton("启动！");
-    JLabel titleLabel = new JLabel("我操你妈逼的傻逼java应用实践我先爬了爬爬爬爬爬", JLabel.CENTER);
+    JLabel titleLabel = new JLabel("请输入待爬取网页信息：", JLabel.CENTER);
     JLabel settingLabel = new JLabel("最大爬取数量：");
     JLabel urlLabel = new JLabel("爬取目标网址：");
     JTextField urlTextField = new JTextField(80);
@@ -27,7 +29,7 @@ public class p1 extends JFrame {
 //        System.setProperty("https.proxyHost", "127.0.0.1"); // 代理服务器地址
 //        System.setProperty("https.proxyPort", "7890"); // 代理服务器端口
 
-        this.setTitle("傻逼爬虫");
+        this.setTitle("网络文本爬取及敏感词分析");
         this.setSize(GM.WIDTH, GM.HEIGHT);
         this.setLayout(new BorderLayout());
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();

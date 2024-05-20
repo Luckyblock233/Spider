@@ -1,4 +1,4 @@
-package spider;
+package spider.Handler.Graph;
 
 //GraphViz.java - a simple API to call dot from Java programs
 

@@ -1,6 +1,5 @@
-package spider;
+package spider.Handler;
 
-import javax.swing.*;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;

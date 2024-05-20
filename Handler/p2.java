@@ -1,4 +1,8 @@
-package spider;
+package spider.Handler;
+
+import spider.Handler.Graph.Graph;
+import spider.UI.GridManager;
+import spider.UI.MyProgressBar;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
@@ -288,7 +292,7 @@ public class p2 extends JFrame {
             }
 
             if (JOptionPane.showConfirmDialog(null, "共爬取了 " +
-                    nowUrlCount + " 个网页，是否在生成可视化有向图网？", "爬取完毕", JOptionPane.YES_NO_OPTION)
+                    nowUrlCount + " 个网页，是否生成可视化有向图网？", "爬取完毕", JOptionPane.YES_NO_OPTION)
                     == JOptionPane.YES_OPTION) {
                 try {
                     StringBuilder dotFormat= new StringBuilder();
