@@ -24,11 +24,6 @@ public class p1 extends JFrame {
     }
 
     public void init() {
-//        System.setProperty("http.proxyHost", "127.0.0.1"); // 代理服务器地址
-//        System.setProperty("http.proxyPort", "7890"); // 代理服务器端口
-//        System.setProperty("https.proxyHost", "127.0.0.1"); // 代理服务器地址
-//        System.setProperty("https.proxyPort", "7890"); // 代理服务器端口
-
         this.setTitle("网络文本爬取及敏感词分析");
         this.setSize(GM.WIDTH, GM.HEIGHT);
         this.setLayout(new BorderLayout());
